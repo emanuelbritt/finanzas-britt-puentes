@@ -166,6 +166,8 @@
     aspect-ratio: 1 / 1; border-radius: 50%; border: none; font-size: 16px; font-weight: 700;
     background: #fff; color: #3D3355; cursor: pointer; font-family: inherit;
     box-shadow: 0 2px 0 rgba(0,0,0,.08);
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    touch-action: manipulation;
   }
   .calc-teclas button.op { background: #3D3355; color: #fff; }
   .calc-teclas button.igual { background: #3DDC84; color: #123047; }
@@ -173,6 +175,11 @@
   .tecla-cero { grid-column: span 2; aspect-ratio: 2.2 / 1 !important; border-radius: 999px !important; }
   .calc-historial { margin-top: 12px; background: rgba(0,0,0,.15); border-radius: 12px; padding: 8px 10px; max-height: 160px; overflow-y: auto; }
   .calc-historial .card-titulo { color: #EFE9FF; margin-bottom: 6px; font-size: 10.5px; }
+  .calc-borrar-historial {
+    width: 100%; margin-top: 8px; background: rgba(255,107,91,.2); border: none;
+    border-radius: 8px; padding: 8px; color: #FFD3CC; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
   .calc-item {
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
     padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.15); font-size: 13px; flex-wrap: wrap;
@@ -318,6 +325,7 @@
   <div class="calc-historial">
     <div class="card-titulo">Historial</div>
     <div id="calcHistorial"></div>
+    <button class="calc-borrar-historial" id="btnBorrarHistorial">🗑️ Borrar historial</button>
   </div>
 </div>
 
@@ -696,7 +704,7 @@ $("btnCerrarCalc").addEventListener("click", cerrarCalc);
 $("calcOverlay").addEventListener("click", cerrarCalc);
 
 $("btnCopiarActual").addEventListener("click", () => {
-  const valorMostrado = parseFloat($("calcDisplay").value);
+  const valorMostrado = limpiarNumero($("calcDisplay").value);
   if (!$("calcDisplay").value || isNaN(valorMostrado)) {
     $("calcAviso").textContent = "Primero calcula algo (toca =)";
     return;
@@ -704,8 +712,47 @@ $("btnCopiarActual").addEventListener("click", () => {
   copiarValor(valorMostrado);
 });
 
+$("btnBorrarHistorial").addEventListener("click", async () => {
+  if (!estado.historial.length) return;
+  const ok = await confirmarAccion("¿Borrar todo el historial de la calculadora?");
+  if (ok) {
+    estado.historial = [];
+    guardar();
+    renderHistorialCalc();
+  }
+});
+
+// Borrado del ⌫: un toque borra un caracter; mantenerlo presionado borra
+// seguido, más rápido, sin que el celular lo trate como selección de texto.
+function borrarUnCaracter() {
+  expr = expr.slice(0, -1);
+  $("calcDisplay").value = formatearExpresionVisual(expr);
+  $("calcAviso").textContent = "";
+}
+let borrarTimeout = null, borrarInterval = null;
+function iniciarBorradoContinuo(ev) {
+  ev.preventDefault();
+  borrarUnCaracter();
+  clearTimeout(borrarTimeout); clearInterval(borrarInterval);
+  borrarTimeout = setTimeout(() => {
+    borrarInterval = setInterval(borrarUnCaracter, 80);
+  }, 450);
+}
+function detenerBorradoContinuo() {
+  clearTimeout(borrarTimeout); borrarTimeout = null;
+  clearInterval(borrarInterval); borrarInterval = null;
+}
+
 document.querySelectorAll(".calc-teclas button").forEach(b => {
-  b.addEventListener("click", () => tecla(b.dataset.k));
+  if (b.dataset.k === "⌫") {
+    b.addEventListener("pointerdown", iniciarBorradoContinuo);
+    ["pointerup", "pointerleave", "pointercancel"].forEach(evt =>
+      b.addEventListener(evt, detenerBorradoContinuo)
+    );
+    b.addEventListener("contextmenu", (e) => e.preventDefault());
+  } else {
+    b.addEventListener("click", () => tecla(b.dataset.k));
+  }
 });
 
 function tecla(k) {
