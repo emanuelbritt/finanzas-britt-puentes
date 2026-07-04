@@ -1,0 +1,17 @@
+{
+  "name": "Finanzas Familiares",
+  "short_name": "Finanzas",
+  "description": "Cuentas de la casa: sueldos, compromisos y lo que queda para cada uno",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#123047",
+  "theme_color": "#123047",
+  "lang": "es-CO",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

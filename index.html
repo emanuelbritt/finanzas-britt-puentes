@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Finanzas Familiares</title>
+<meta name="theme-color" content="#123047">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #EDF3F8; color: #123047;
+    font-family: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    padding-bottom: 60px;
+  }
+  input, select { max-width: 100%; min-width: 0; font-family: inherit; }
+  input:focus, button:focus, select:focus { outline: 2px solid #2E86C1; outline-offset: 1px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  header { background: #123047; color: #E3F0FA; padding: 24px 20px 12px; position: relative; }
+  .eyebrow { font-size: 11px; letter-spacing: .18em; color: #7EC4EA; font-weight: 700; margin-bottom: 6px; }
+  h1 { margin: 0; font-size: 24px; font-weight: 800; line-height: 1.2; }
+  .subtitulo-input {
+    margin-top: 10px; width: 100%; background: #1B4361; border: 1.5px dashed #3A6A8E;
+    border-radius: 10px; color: #CFE6F5; font-size: 14px; padding: 9px 12px;
+  }
+  .subtitulo-input::placeholder { color: #6E97B5; }
+  .btn-calc {
+    position: absolute; top: 20px; right: 16px;
+    background: #FFFFFF; border: none; border-radius: 14px;
+    width: 48px; height: 48px; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,.28);
+    padding: 6px; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-calc svg { display: block; }
+
+  /* ── Pestañas estilo navegador ── */
+  .pestanas {
+    display: flex; align-items: flex-end; gap: 3px; overflow-x: auto;
+    background: #123047; padding: 10px 10px 0; -webkit-overflow-scrolling: touch;
+  }
+  .pestana {
+    flex: 0 0 auto; display: flex; align-items: stretch; gap: 0;
+    border-radius: 12px 12px 0 0; overflow: hidden; background: #1B4361;
+  }
+  .pestana-label {
+    border: none; background: transparent; color: #A9C9DE; font-weight: 700;
+    font-size: 13.5px; padding: 10px 6px 10px 16px; cursor: pointer;
+    white-space: nowrap; font-family: inherit;
+  }
+  .pestana.activa .pestana-label, .pestana.activa .cerrar-tab { background: #EDF3F8; color: #123047; }
+  .pestana .cerrar-tab {
+    border: none; background: transparent; color: inherit; opacity: .55; font-size: 15px;
+    padding: 10px 14px 10px 6px; cursor: pointer; font-family: inherit; min-width: 34px;
+  }
+  .pestana .cerrar-tab:active { opacity: 1; }
+  .pestana-nueva {
+    background: transparent; color: #7EC4EA; border: 1.5px dashed #2E5878;
+    padding: 9px 14px;
+  }
+
+  .card {
+    background: #fff; border-radius: 14px; padding: 16px;
+    margin: 14px 14px 0; box-shadow: 0 1px 3px rgba(18,48,71,.10);
+  }
+  .card-titulo {
+    font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: #4E7A9B; margin-bottom: 12px;
+  }
+  .grid2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; margin-bottom: 4px; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 600; color: #33607F; min-width: 0; }
+  .input {
+    padding: 10px 12px; border-radius: 10px; border: 1.5px solid #B9D4E8;
+    font-size: 16px; font-variant-numeric: tabular-nums; background: #F7FBFE; width: 100%;
+  }
+
+  .resumen { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 14px 0; }
+  .resumen-item { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 3px rgba(18,48,71,.10); }
+  .resumen-total { grid-column: 1 / -1; background: linear-gradient(120deg, #2E86C1, #1B5E8F); }
+  .resumen-label {
+    font-size: 11.5px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: #4E7A9B; margin-bottom: 4px;
+  }
+  .resumen-valor { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .resumen-nota { font-size: 11.5px; color: #C9E4F5; margin-top: 4px; line-height: 1.4; }
+  .naranja { color: #C97E12; }
+
+  .fila-compromiso {
+    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #E3EEF6;
+  }
+  .fila-compromiso:last-child { border-bottom: none; margin-bottom: 4px; }
+  .fila-compromiso-linea {
+    display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr) 32px;
+    gap: 8px; align-items: center; margin-bottom: 6px;
+  }
+  .input-nota {
+    width: 100%; padding: 7px 10px; border-radius: 8px; border: 1.5px dashed #CBDEEC;
+    font-size: 12.5px; background: #FBFDFE; color: #4E7A9B; font-family: inherit;
+  }
+  .input-nombre {
+    padding: 9px 10px; border-radius: 10px; border: 1.5px solid #B9D4E8;
+    font-size: 14px; background: #F7FBFE; width: 100%;
+  }
+  .input-valor-c {
+    padding: 9px 10px; border-radius: 10px; border: 1.5px solid #B9D4E8;
+    font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
+    text-align: right; background: #F7FBFE; width: 100%;
+  }
+  .btn-primario {
+    background: #2E86C1; color: #fff; border: none; border-radius: 10px;
+    padding: 11px 18px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%;
+    font-family: inherit;
+  }
+  .btn-secundario {
+    background: transparent; color: #2E86C1; border: 1.5px dashed #8FBEDD;
+    border-radius: 10px; padding: 10px 14px; font-size: 14px; font-weight: 600;
+    cursor: pointer; width: 100%; font-family: inherit; margin-top: 4px;
+  }
+  .btn-peligro {
+    margin-top: 10px; background: transparent; color: #A33B2E;
+    border: 1.5px solid #E0BDB7; border-radius: 10px; padding: 8px 12px;
+    font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; font-family: inherit;
+  }
+  .btn-borrar { background: transparent; border: none; color: #A33B2E; cursor: pointer; font-size: 15px; padding: 4px; }
+
+  footer { text-align: center; font-size: 12px; color: #6E97B5; margin-top: 18px; padding: 0 14px; line-height: 1.5; }
+  .estado-sync { font-weight: 600; }
+  .sync-ok { color: #1E7A4E; }
+  .sync-off { color: #C97E12; }
+  .oculto { display: none !important; }
+  .calc-overlay {
+    position: fixed; inset: 0; z-index: 89; background: rgba(18,48,71,.35);
+  }
+
+  /* ── Calculadora flotante, estilo calculadora real (morada, compacta) ── */
+  .calc-panel {
+    position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+    z-index: 90; width: 100%; max-width: 300px;
+    background: #8B6FE8; color: #fff; border-radius: 28px;
+    box-shadow: 0 14px 36px rgba(0,0,0,.35);
+    padding: 14px 14px 16px; max-height: 88vh; overflow-y: auto;
+  }
+  .calc-cabecera { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .calc-cabecera .card-titulo { margin: 0; color: #EFE9FF; font-size: 11px; }
+  .calc-cerrar {
+    background: rgba(0,0,0,.15); border: none; font-size: 15px; cursor: pointer;
+    color: #fff; padding: 3px 9px; border-radius: 8px;
+  }
+  .calc-display {
+    width: 100%; padding: 14px 12px; border-radius: 14px; border: none;
+    font-size: 24px; text-align: right; font-variant-numeric: tabular-nums;
+    background: #4A3F63; color: #fff; margin-bottom: 8px; font-family: inherit;
+  }
+  .calc-copiar-actual {
+    width: 100%; background: rgba(255,255,255,.18); border: none; border-radius: 10px;
+    color: #fff; font-size: 12.5px; font-weight: 700; padding: 8px; margin-bottom: 10px;
+    cursor: pointer; font-family: inherit;
+  }
+  .calc-teclas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .calc-teclas button {
+    aspect-ratio: 1 / 1; border-radius: 50%; border: none; font-size: 16px; font-weight: 700;
+    background: #fff; color: #3D3355; cursor: pointer; font-family: inherit;
+    box-shadow: 0 2px 0 rgba(0,0,0,.08);
+  }
+  .calc-teclas button.op { background: #3D3355; color: #fff; }
+  .calc-teclas button.igual { background: #3DDC84; color: #123047; }
+  .calc-teclas button.borrar { background: #FF6B5B; color: #fff; }
+  .tecla-cero { grid-column: span 2; aspect-ratio: 2.2 / 1 !important; border-radius: 999px !important; }
+  .calc-historial { margin-top: 12px; background: rgba(0,0,0,.15); border-radius: 12px; padding: 8px 10px; max-height: 160px; overflow-y: auto; }
+  .calc-historial .card-titulo { color: #EFE9FF; margin-bottom: 6px; font-size: 10.5px; }
+  .calc-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.15); font-size: 13px; flex-wrap: wrap;
+  }
+  .calc-item:last-child { border-bottom: none; }
+  .calc-item .expr { color: #D8CFF2; font-size: 11.5px; width: 100%; }
+  .calc-item .res { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14.5px; color: #fff; }
+  .calc-item .acciones { display: flex; gap: 6px; align-items: center; }
+  .mini-btn {
+    background: rgba(255,255,255,.2); border: none; border-radius: 8px; padding: 5px 9px;
+    font-size: 11.5px; font-weight: 600; color: #fff; cursor: pointer; font-family: inherit;
+  }
+  .mini-select {
+    border: none; border-radius: 8px; padding: 5px 6px;
+    font-size: 11.5px; background: rgba(255,255,255,.2); color: #fff; max-width: 130px;
+  }
+  .calc-aviso { font-size: 12px; color: #D6F5E4; font-weight: 600; min-height: 16px; margin-top: 6px; }
+
+  /* ── Modal personalizado (reemplaza prompt(), que falla en modo PWA/iOS) ── */
+  .modal-fondo {
+    position: fixed; inset: 0; z-index: 200; background: rgba(18,48,71,.55);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-caja {
+    background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 320px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.3);
+  }
+  .modal-caja h3 { margin: 0 0 12px; font-size: 16px; color: #123047; }
+  .modal-caja input {
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1.5px solid #B9D4E8;
+    font-size: 16px; background: #F7FBFE; margin-bottom: 14px; font-family: inherit;
+  }
+  .modal-botones { display: flex; gap: 8px; }
+  .modal-botones button {
+    flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 14px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .modal-cancelar { background: #EDF3F8; color: #4E7A9B; }
+  .modal-aceptar { background: #2E86C1; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">CUENTAS DE LA CASA</div>
+  <h1>Finanzas Familiares</h1>
+  <input type="text" id="subtituloMes" class="subtitulo-input" placeholder="Ej: Sueldo de enero, pagado en marzo…">
+  <button class="btn-calc" id="btnAbrirCalc" aria-label="Abrir calculadora">
+    <svg viewBox="0 0 24 24" width="26" height="26" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3.5" y="1.5" width="17" height="21" rx="3.5" fill="#8B6FE8"/>
+      <rect x="6" y="4" width="12" height="5.2" rx="1.3" fill="#2E2154"/>
+      <circle cx="7.3" cy="13.3" r="1.5" fill="#fff"/>
+      <circle cx="12" cy="13.3" r="1.5" fill="#fff"/>
+      <circle cx="16.7" cy="13.3" r="1.5" fill="#fff"/>
+      <circle cx="7.3" cy="18" r="1.5" fill="#fff"/>
+      <circle cx="12" cy="18" r="1.5" fill="#fff"/>
+      <circle cx="16.7" cy="18" r="1.5" fill="#3DDC84"/>
+    </svg>
+  </button>
+</header>
+
+<nav class="pestanas" id="barraPestanas"></nav>
+
+<section class="card">
+  <div class="card-titulo">Sueldos del mes</div>
+  <div class="grid2">
+    <label>Sueldo de Emanuel
+      <input type="text" inputmode="decimal" id="sueldoEmanuel" class="input">
+    </label>
+    <label>Sueldo de Elizabeth
+      <input type="text" inputmode="decimal" id="sueldoElizabeth" class="input">
+    </label>
+  </div>
+</section>
+
+<section class="resumen">
+  <div class="resumen-item">
+    <div class="resumen-label">Total sueldos</div>
+    <div class="resumen-valor" id="totalSueldos"></div>
+  </div>
+  <div class="resumen-item">
+    <div class="resumen-label naranja">Total compromisos</div>
+    <div class="resumen-valor naranja" id="totalCompromisos"></div>
+  </div>
+  <div class="resumen-item resumen-total">
+    <div class="resumen-label" style="color:#E3F0FA">Para cada uno</div>
+    <div class="resumen-valor" style="color:#fff;font-size:28px" id="paraCadaUno"></div>
+    <div class="resumen-nota" id="notaRestante"></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-titulo">Compromisos del mes</div>
+  <div id="listaCompromisos"></div>
+  <button class="btn-secundario" id="btnAgregarCompromiso">+ Agregar compromiso</button>
+</section>
+
+<section class="card">
+  <div class="card-titulo">Este mes / pestaña</div>
+  <label>Nombre de la pestaña
+    <input type="text" id="nombrePestana" class="input" placeholder="Ej: Enero">
+  </label>
+  <button class="btn-secundario" id="btnDuplicar">📋 Duplicar este mes (crea el siguiente con los mismos compromisos)</button>
+  <button class="btn-peligro" id="btnEliminarPestana">Eliminar esta pestaña</button>
+</section>
+
+<footer>
+  <span>Sincronizado en la nube entre sus celulares.</span><br>
+  <span class="estado-sync" id="estadoSync">Conectando…</span>
+</footer>
+
+<!-- ── Calculadora flotante ── -->
+<div class="calc-overlay oculto" id="calcOverlay"></div>
+<div class="calc-panel oculto" id="calcPanel">
+  <div class="calc-cabecera">
+    <div class="card-titulo">Calculadora</div>
+    <button class="calc-cerrar" id="btnCerrarCalc" aria-label="Cerrar calculadora">✕ Cerrar</button>
+  </div>
+  <input type="text" class="calc-display" id="calcDisplay" placeholder="0" readonly>
+  <button class="calc-copiar-actual" id="btnCopiarActual">📋 Copiar resultado</button>
+  <div class="calc-teclas">
+    <button class="op" data-k="(">(</button>
+    <button class="op" data-k=")">)</button>
+    <button class="op" data-k="÷">÷</button>
+    <button class="borrar" data-k="⌫">⌫</button>
+    <button data-k="7">7</button>
+    <button data-k="8">8</button>
+    <button data-k="9">9</button>
+    <button class="op" data-k="×">×</button>
+    <button data-k="4">4</button>
+    <button data-k="5">5</button>
+    <button data-k="6">6</button>
+    <button class="op" data-k="−">−</button>
+    <button data-k="1">1</button>
+    <button data-k="2">2</button>
+    <button data-k="3">3</button>
+    <button class="op" data-k="+">+</button>
+    <button data-k="0" class="tecla-cero">0</button>
+    <button data-k=".">.</button>
+    <button class="igual" data-k="=">=</button>
+  </div>
+  <p class="calc-aviso" id="calcAviso"></p>
+  <div class="calc-historial">
+    <div class="card-titulo">Historial</div>
+    <div id="calcHistorial"></div>
+  </div>
+</div>
+
+<!-- ── Modal personalizado (reemplaza prompt) ── -->
+<div class="modal-fondo oculto" id="modalFondo">
+  <div class="modal-caja">
+    <h3 id="modalTitulo">Nombre</h3>
+    <input type="text" id="modalInput">
+    <div class="modal-botones">
+      <button class="modal-cancelar" id="modalCancelar">Cancelar</button>
+      <button class="modal-aceptar" id="modalAceptar">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal de confirmación (reemplaza confirm()/alert(), que pueden no funcionar en algunos visores) ── -->
+<div class="modal-fondo oculto" id="confirmFondo">
+  <div class="modal-caja">
+    <h3 id="confirmTitulo">¿Confirmar?</h3>
+    <div class="modal-botones">
+      <button class="modal-cancelar" id="confirmCancelar">Cancelar</button>
+      <button class="modal-aceptar" id="confirmAceptar" style="background:#A33B2E;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════════
+// ESTADO Y UTILIDADES (no dependen de Firebase para nada)
+// ═══════════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+// Formato: coma "," para separar miles, punto "." para decimales (ej: 1,234.56)
+function formatoMiles(n) {
+  if (n === null || n === undefined || isNaN(n)) return "";
+  const neg = n < 0 ? "-" : "";
+  const partes = Math.abs(n).toFixed(2).split(".");
+  let entero = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return partes[1] === "00" ? neg + entero : neg + entero + "." + partes[1];
+}
+// Igual que formatoMiles pero conserva lo que la persona va escribiendo
+// (no redondea ni completa decimales mientras todavía está tecleando)
+function formatoMilesEscritura(raw) {
+  const partes = String(raw).split(".");
+  let entero = (partes[0] || "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (partes.length > 1) return entero + "." + partes[1].slice(0, 2);
+  return entero;
+}
+function fmtCOP(n) { return "$" + formatoMiles(n); }
+const K_DATOS = "finanzas:datos";
+
+function mesActual() {
+  const m = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  return m[new Date().getMonth()];
+}
+// Limpia texto a un número: quita comas de miles, deja solo un punto decimal
+function limpiarNumero(txt) {
+  if (txt === null || txt === undefined) return 0;
+  let s = String(txt).replace(/,/g, "").replace(/[^\d.]/g, "");
+  const i = s.indexOf(".");
+  if (i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, "");
+  const v = parseFloat(s);
+  return isNaN(v) ? 0 : v;
+}
+// Solo limpia el texto (para mostrar mientras se escribe), sin convertir a número todavía
+function limpiarTexto(txt) {
+  let s = String(txt).replace(/,/g, "").replace(/[^\d.]/g, "");
+  const i = s.indexOf(".");
+  if (i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, "");
+  return s;
+}
+// Formatea la expresión de la calculadora para mostrarla con comas de miles,
+// sin tocar los operadores (+ − × ÷ ( )), y sin alterar el "expr" real que se usa para calcular
+function formatearExpresionVisual(e) {
+  if (!e) return "";
+  const partes = e.split(/([+\-×÷()])/);
+  return partes.map(p => (p === "" || /[+\-×÷()]/.test(p)) ? p : formatoMilesEscritura(p)).join("");
+}
+function pestanaNueva(nombre) {
+  return {
+    id: Date.now() + Math.floor(Math.random()*1000),
+    nombre: nombre || "Mes",
+    subtitulo: "",
+    sueldoEmanuel: 0,
+    sueldoElizabeth: 0,
+    compromisos: []
+  };
+}
+
+let estado = {
+  pestanas: [pestanaNueva(mesActual())],
+  activaId: null,
+  historial: [],
+  updatedAt: 0
+};
+estado.activaId = estado.pestanas[0].id;
+
+function activa() {
+  return estado.pestanas.find(p => p.id === estado.activaId) || estado.pestanas[0];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDADO LOCAL (siempre funciona, con o sin internet)
+// ═══════════════════════════════════════════════════════════════
+function guardarLocal() {
+  estado.updatedAt = Date.now();
+  try { localStorage.setItem(K_DATOS, JSON.stringify(estado)); } catch(e) {}
+}
+function cargarLocal() {
+  try {
+    const raw = localStorage.getItem(K_DATOS);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (Array.isArray(s.pestanas) && s.pestanas.length) estado = s;
+      if (!estado.pestanas.find(p => p.id === estado.activaId)) estado.activaId = estado.pestanas[0].id;
+      if (!Array.isArray(estado.historial)) estado.historial = [];
+    }
+  } catch(e) {}
+}
+
+function ponerEstadoSync(texto, clase) {
+  const el = $("estadoSync");
+  el.textContent = texto;
+  el.className = "estado-sync " + clase;
+}
+
+// Reemplaza a prompt(), que no funciona de forma confiable en apps
+// instaladas ("Agregar a inicio") en iOS. Devuelve una Promise<string|null>.
+function pedirTexto(titulo, valorInicial) {
+  return new Promise((resolve) => {
+    $("modalTitulo").textContent = titulo;
+    $("modalInput").value = valorInicial || "";
+    $("modalFondo").classList.remove("oculto");
+    setTimeout(() => $("modalInput").focus(), 50);
+
+    function limpiar() {
+      $("modalFondo").classList.add("oculto");
+      $("modalAceptar").removeEventListener("click", onAceptar);
+      $("modalCancelar").removeEventListener("click", onCancelar);
+      $("modalInput").removeEventListener("keydown", onEnter);
+    }
+    function onAceptar() { const v = $("modalInput").value; limpiar(); resolve(v); }
+    function onCancelar() { limpiar(); resolve(null); }
+    function onEnter(e) { if (e.key === "Enter") onAceptar(); }
+
+    $("modalAceptar").addEventListener("click", onAceptar);
+    $("modalCancelar").addEventListener("click", onCancelar);
+    $("modalInput").addEventListener("keydown", onEnter);
+  });
+}
+
+// Reemplaza a confirm()/alert(), que pueden no funcionar en visores con
+// restricciones (como vistas previas embebidas). Devuelve Promise<boolean>.
+function confirmarAccion(mensaje, soloAviso) {
+  return new Promise((resolve) => {
+    $("confirmTitulo").textContent = mensaje;
+    $("confirmCancelar").classList.toggle("oculto", !!soloAviso);
+    $("confirmAceptar").textContent = soloAviso ? "Entendido" : "Eliminar";
+    $("confirmFondo").classList.remove("oculto");
+
+    function limpiar() {
+      $("confirmFondo").classList.add("oculto");
+      $("confirmAceptar").removeEventListener("click", onSi);
+      $("confirmCancelar").removeEventListener("click", onNo);
+    }
+    function onSi() { limpiar(); resolve(true); }
+    function onNo() { limpiar(); resolve(false); }
+
+    $("confirmAceptar").addEventListener("click", onSi);
+    $("confirmCancelar").addEventListener("click", onNo);
+  });
+}
+function avisar(mensaje) { return confirmarAccion(mensaje, true); }
+
+// guardar() es la función que usa el resto de la app: guarda local
+// SIEMPRE, y además intenta subir a Firebase si está disponible.
+let guardar = () => { guardarLocal(); };
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function render() {
+  const p = activa();
+
+  // Pestañas estilo navegador
+  const barra = $("barraPestanas");
+  barra.innerHTML = "";
+  estado.pestanas.forEach(t => {
+    const b = document.createElement("div");
+    b.className = "pestana" + (t.id === estado.activaId ? " activa" : "");
+
+    const label = document.createElement("button");
+    label.className = "pestana-label";
+    label.textContent = t.nombre;
+    label.addEventListener("click", () => { estado.activaId = t.id; render(); });
+
+    const cerrar = document.createElement("button");
+    cerrar.className = "cerrar-tab";
+    cerrar.textContent = "✕";
+    cerrar.setAttribute("aria-label", "Cerrar pestaña " + t.nombre);
+    cerrar.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      if (t.id !== estado.activaId) {
+        // Si no es la pestaña activa, primero te lleva a esa pestaña
+        estado.activaId = t.id;
+        render();
+      } else {
+        // Si ya estás en esa pestaña, sí pregunta para borrarla
+        eliminarPestana(t.id);
+      }
+    });
+
+    b.append(label, cerrar);
+    barra.appendChild(b);
+  });
+  const bNueva = document.createElement("button");
+  bNueva.className = "pestana pestana-nueva";
+  bNueva.textContent = "+ Nuevo mes";
+  bNueva.addEventListener("click", async () => {
+    const nombre = await pedirTexto("Nombre del nuevo mes", "");
+    if (nombre === null) return;
+    const nueva = pestanaNueva(nombre.trim() || "Mes");
+    estado.pestanas.push(nueva);
+    estado.activaId = nueva.id;
+    guardar(); render();
+  });
+  barra.appendChild(bNueva);
+
+  // Cabecera y sueldos
+  $("subtituloMes").value = p.subtitulo || "";
+  $("sueldoEmanuel").value = p.sueldoEmanuel ? formatoMiles(p.sueldoEmanuel) : "";
+  $("sueldoElizabeth").value = p.sueldoElizabeth ? formatoMiles(p.sueldoElizabeth) : "";
+  $("nombrePestana").value = p.nombre;
+
+  // Compromisos
+  const lista = $("listaCompromisos");
+  lista.innerHTML = "";
+  p.compromisos.forEach(c => {
+    const fila = document.createElement("div");
+    fila.className = "fila-compromiso";
+
+    const linea = document.createElement("div");
+    linea.className = "fila-compromiso-linea";
+
+    const inN = document.createElement("input");
+    inN.type = "text"; inN.className = "input-nombre"; inN.value = c.nombre;
+    inN.placeholder = "Nombre";
+    inN.addEventListener("change", () => { c.nombre = inN.value; guardar(); render(); });
+
+    const inV = document.createElement("input");
+    inV.type = "text"; inV.inputMode = "decimal"; inV.className = "input-valor-c";
+    inV.value = c.valor ? formatoMiles(c.valor) : "";
+    inV.placeholder = "$";
+    // Actualiza el total EN VIVO mientras escribes, sin perder el foco
+    inV.addEventListener("input", () => {
+      const texto = limpiarTexto(inV.value);
+      c.valor = limpiarNumero(texto);
+      inV.value = formatoMilesEscritura(texto);
+      guardar();
+      renderResumen();
+    });
+
+    const bX = document.createElement("button");
+    bX.className = "btn-borrar"; bX.textContent = "✕";
+    bX.setAttribute("aria-label", "Eliminar " + (c.nombre || "compromiso"));
+    bX.addEventListener("click", async () => {
+      const ok = await confirmarAccion("¿Eliminar \"" + (c.nombre || "este compromiso") + "\"?");
+      if (ok) {
+        p.compromisos = p.compromisos.filter(x => x.id !== c.id);
+        guardar(); render();
+      }
+    });
+
+    linea.append(inN, inV, bX);
+
+    const inNota = document.createElement("input");
+    inNota.type = "text"; inNota.className = "input-nota";
+    inNota.value = c.nota || "";
+    inNota.placeholder = "📝 Nota o aclaración (opcional)";
+    inNota.addEventListener("change", () => { c.nota = inNota.value; guardar(); });
+
+    fila.append(linea, inNota);
+    lista.appendChild(fila);
+  });
+
+  renderResumen();
+  renderHistorialCalc();
+}
+
+function renderResumen() {
+  const p = activa();
+  const totalSueldos = (p.sueldoEmanuel || 0) + (p.sueldoElizabeth || 0);
+  const totalComp = p.compromisos.reduce((s,c) => s + (c.valor || 0), 0);
+  const restante = totalSueldos - totalComp;
+  $("totalSueldos").textContent = fmtCOP(totalSueldos);
+  $("totalCompromisos").textContent = fmtCOP(totalComp);
+  $("paraCadaUno").textContent = fmtCOP(restante / 2);
+  $("notaRestante").textContent = restante >= 0
+    ? "después de pagar todo les queda " + fmtCOP(restante) + " en total, dividido entre los dos"
+    : "⚠️ ojo: los compromisos superan los sueldos por " + fmtCOP(Math.abs(restante));
+}
+
+async function eliminarPestana(id) {
+  if (estado.pestanas.length === 1) { await avisar("No puedes eliminar la única pestaña."); return; }
+  const p = estado.pestanas.find(x => x.id === id);
+  if (!p) return;
+  const ok = await confirmarAccion("¿Eliminar la pestaña \"" + p.nombre + "\" con todos sus datos? (También se borra en el otro celular)");
+  if (ok) {
+    estado.pestanas = estado.pestanas.filter(x => x.id !== id);
+    if (estado.activaId === id) estado.activaId = estado.pestanas[0].id;
+    guardar(); render();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTOS PRINCIPALES
+// ═══════════════════════════════════════════════════════════════
+$("subtituloMes").addEventListener("change", e => { activa().subtitulo = e.target.value; guardar(); });
+
+$("sueldoEmanuel").addEventListener("input", e => {
+  const p = activa();
+  const texto = limpiarTexto(e.target.value);
+  p.sueldoEmanuel = limpiarNumero(texto);
+  e.target.value = formatoMilesEscritura(texto);
+  guardar(); renderResumen();
+});
+$("sueldoElizabeth").addEventListener("input", e => {
+  const p = activa();
+  const texto = limpiarTexto(e.target.value);
+  p.sueldoElizabeth = limpiarNumero(texto);
+  e.target.value = formatoMilesEscritura(texto);
+  guardar(); renderResumen();
+});
+
+$("btnAgregarCompromiso").addEventListener("click", () => {
+  activa().compromisos.push({ id: Date.now(), nombre: "", valor: 0 });
+  guardar(); render();
+});
+
+$("nombrePestana").addEventListener("change", e => {
+  activa().nombre = e.target.value.trim() || "Mes";
+  guardar(); render();
+});
+
+$("btnDuplicar").addEventListener("click", async () => {
+  const p = activa();
+  const nombre = await pedirTexto("Nombre del nuevo mes", "");
+  if (nombre === null) return;
+  const nueva = pestanaNueva(nombre.trim() || (p.nombre + " (copia)"));
+  nueva.compromisos = p.compromisos.map(c => ({ id: Date.now() + Math.floor(Math.random()*1000), nombre: c.nombre, valor: c.valor, nota: c.nota || "" }));
+  nueva.sueldoEmanuel = p.sueldoEmanuel;
+  nueva.sueldoElizabeth = p.sueldoElizabeth;
+  estado.pestanas.push(nueva);
+  estado.activaId = nueva.id;
+  guardar(); render();
+});
+
+$("btnEliminarPestana").addEventListener("click", () => eliminarPestana(activa().id));
+
+// ═══════════════════════════════════════════════════════════════
+// CALCULADORA FLOTANTE
+// ═══════════════════════════════════════════════════════════════
+let expr = "";
+
+function abrirCalc() {
+  $("calcPanel").classList.remove("oculto");
+  $("calcOverlay").classList.remove("oculto");
+}
+function cerrarCalc() {
+  $("calcPanel").classList.add("oculto");
+  $("calcOverlay").classList.add("oculto");
+}
+
+$("btnAbrirCalc").addEventListener("click", abrirCalc);
+$("btnCerrarCalc").addEventListener("click", cerrarCalc);
+$("calcOverlay").addEventListener("click", cerrarCalc);
+
+$("btnCopiarActual").addEventListener("click", () => {
+  const valorMostrado = parseFloat($("calcDisplay").value);
+  if (!$("calcDisplay").value || isNaN(valorMostrado)) {
+    $("calcAviso").textContent = "Primero calcula algo (toca =)";
+    return;
+  }
+  copiarValor(valorMostrado);
+});
+
+document.querySelectorAll(".calc-teclas button").forEach(b => {
+  b.addEventListener("click", () => tecla(b.dataset.k));
+});
+
+function tecla(k) {
+  $("calcAviso").textContent = "";
+  if (k === "C") { expr = ""; }
+  else if (k === "⌫") { expr = expr.slice(0, -1); }
+  else if (k === "=") { calcularExpr(); return; }
+  else { expr += k; }
+  $("calcDisplay").value = formatearExpresionVisual(expr);
+}
+
+function calcularExpr() {
+  const js = expr.replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-");
+  if (!js || !/^[\d+\-*/(). ]+$/.test(js)) return;
+  try {
+    const res = Function('"use strict"; return (' + js + ')')();
+    if (typeof res !== "number" || !isFinite(res)) throw new Error();
+    const resRedondeado = Math.round(res * 100) / 100;
+    estado.historial.unshift({ expr: formatearExpresionVisual(expr), res: resRedondeado, ts: Date.now() });
+    estado.historial = estado.historial.slice(0, 30);
+    expr = String(resRedondeado);
+    $("calcDisplay").value = formatearExpresionVisual(expr);
+    guardar();
+    renderHistorialCalc();
+  } catch(e) {
+    $("calcAviso").textContent = "Operación inválida";
+  }
+}
+
+async function copiarValor(v) {
+  const texto = String(Math.round(v));
+  try {
+    await navigator.clipboard.writeText(texto);
+    $("calcAviso").textContent = "Copiado: " + fmtCOP(v);
+  } catch(e) {
+    $("calcAviso").textContent = "Valor: " + texto + " (cópialo manualmente)";
+  }
+}
+
+function renderHistorialCalc() {
+  const cont = $("calcHistorial");
+  cont.innerHTML = "";
+  const p = activa();
+  estado.historial.forEach(h => {
+    const item = document.createElement("div");
+    item.className = "calc-item";
+
+    const ex = document.createElement("div");
+    ex.className = "expr"; ex.textContent = h.expr + " =";
+
+    const rs = document.createElement("div");
+    rs.className = "res"; rs.textContent = fmtCOP(h.res);
+
+    const acc = document.createElement("div");
+    acc.className = "acciones";
+
+    const bCopiar = document.createElement("button");
+    bCopiar.className = "mini-btn"; bCopiar.textContent = "Copiar";
+    bCopiar.addEventListener("click", () => copiarValor(h.res));
+
+    const sel = document.createElement("select");
+    sel.className = "mini-select";
+    const op0 = document.createElement("option");
+    op0.value = ""; op0.textContent = "Sumar a…";
+    sel.appendChild(op0);
+    p.compromisos.forEach(c => {
+      const op = document.createElement("option");
+      op.value = c.id; op.textContent = c.nombre || "(sin nombre)";
+      sel.appendChild(op);
+    });
+    sel.addEventListener("change", () => {
+      const c = p.compromisos.find(x => String(x.id) === sel.value);
+      if (c) {
+        c.valor = (c.valor || 0) + Math.round(h.res);
+        guardar(); render();
+        $("calcAviso").textContent = "Sumado " + fmtCOP(h.res) + " a \"" + (c.nombre || "compromiso") + "\"";
+        abrirCalc();
+      }
+      sel.value = "";
+    });
+
+    acc.append(bCopiar, sel);
+    item.append(ex, rs, acc);
+    cont.appendChild(item);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ARRANQUE DE LA APP (siempre corre, pase lo que pase con Firebase)
+// ═══════════════════════════════════════════════════════════════
+cargarLocal();
+render();
+
+if ("serviceWorker" in navigator &&
+    (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FIREBASE — carga aparte y a prueba de fallos.
+// Si esto falla (sin internet, config mala, red restringida, etc.)
+// el resto de la app ya está funcionando y sigue funcionando igual;
+// solo se pierde la sincronización entre celulares.
+// ═══════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCy82TCYuh7RTVUgGu9w47B_1eo3HpQUOI",
+  authDomain: "finanzas-britt-puentes.firebaseapp.com",
+  projectId: "finanzas-britt-puentes",
+  storageBucket: "finanzas-britt-puentes.firebasestorage.app",
+  messagingSenderId: "394769440619",
+  appId: "1:394769440619:web:41f114510ae7a13f93f62e"
+};
+
+(async function iniciarFirebase() {
+  let refDoc, setDoc, getDoc, onSnapshot;
+  try {
+    const appMod = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const fsMod = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+    const app = appMod.initializeApp(firebaseConfig);
+    const db = fsMod.initializeFirestore(app, { localCache: fsMod.persistentLocalCache() });
+    refDoc = fsMod.doc(db, "finanzas", "familia");
+    setDoc = fsMod.setDoc; getDoc = fsMod.getDoc; onSnapshot = fsMod.onSnapshot;
+  } catch (e) {
+    console.error("Firebase no se pudo cargar:", e);
+    ponerEstadoSync("Sin sincronización en la nube (esta app funciona local)", "sync-off");
+    return;
+  }
+
+  let temporizador = null;
+  guardar = () => {
+    guardarLocal();
+    ponerEstadoSync("Guardando…", "sync-off");
+    clearTimeout(temporizador);
+    temporizador = setTimeout(async () => {
+      try {
+        await setDoc(refDoc, estado);
+        ponerEstadoSync("Sincronizado ✓", "sync-ok");
+      } catch (e) {
+        ponerEstadoSync("Sin conexión — se sincroniza al volver la señal", "sync-off");
+      }
+    }, 800);
+  };
+
+  function aplicarRemoto(remoto) {
+    if (!Array.isArray(remoto.pestanas) || !remoto.pestanas.length) return;
+    const idActiva = estado.activaId;
+    estado = remoto;
+    estado.activaId = estado.pestanas.find(p => p.id === idActiva) ? idActiva : estado.pestanas[0].id;
+    if (!Array.isArray(estado.historial)) estado.historial = [];
+    guardarLocal();
+    render();
+  }
+
+  try {
+    const snap = await getDoc(refDoc);
+    if (snap.exists()) {
+      const remoto = snap.data();
+      if ((remoto.updatedAt || 0) >= (estado.updatedAt || 0)) aplicarRemoto(remoto);
+      else await setDoc(refDoc, estado);
+    } else {
+      await setDoc(refDoc, estado);
+    }
+    ponerEstadoSync("Sincronizado ✓", "sync-ok");
+  } catch (e) {
+    ponerEstadoSync("Sin conexión — trabajando con datos locales", "sync-off");
+  }
+
+  onSnapshot(refDoc, (snap) => {
+    if (!snap.exists() || snap.metadata.hasPendingWrites) return;
+    const remoto = snap.data();
+    if ((remoto.updatedAt || 0) > (estado.updatedAt || 0)) {
+      aplicarRemoto(remoto);
+      ponerEstadoSync("Sincronizado ✓", "sync-ok");
+    }
+  }, () => ponerEstadoSync("Sin conexión — trabajando con datos locales", "sync-off"));
+})();
+</script>
+</body>
+</html>
