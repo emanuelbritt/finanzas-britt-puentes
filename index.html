@@ -91,25 +91,30 @@
   .naranja { color: #C97E12; }
 
   .fila-compromiso {
-    margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #E3EEF6;
+    background: #F1F7FC; border: 1.5px solid #D9E8F3; border-radius: 13px;
+    padding: 11px; margin-bottom: 12px;
   }
-  .fila-compromiso:last-child { border-bottom: none; margin-bottom: 4px; }
+  .fila-compromiso:last-child { margin-bottom: 4px; }
   .fila-compromiso-linea {
     display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr) 32px;
-    gap: 8px; align-items: center; margin-bottom: 6px;
+    gap: 8px; align-items: center; margin-bottom: 8px;
   }
   .input-nota {
-    width: 100%; padding: 7px 10px; border-radius: 8px; border: 1.5px dashed #CBDEEC;
-    font-size: 12.5px; background: #FBFDFE; color: #4E7A9B; font-family: inherit;
+    display: block; width: 100%; padding: 7px 10px; border-radius: 8px;
+    border: 1.5px dashed #C4DAEA; border-left: 4px solid #9DC3DE;
+    font-size: 12.5px; background: rgba(255,255,255,.55); color: #4E7A9B;
+    font-family: inherit; line-height: 1.45;
+    resize: none; overflow: hidden; min-height: 34px;
   }
+  .input-nota::placeholder { font-style: italic; color: #8FB3CC; }
   .input-nombre {
     padding: 9px 10px; border-radius: 10px; border: 1.5px solid #B9D4E8;
-    font-size: 14px; background: #F7FBFE; width: 100%;
+    font-size: 14px; background: #fff; width: 100%;
   }
   .input-valor-c {
     padding: 9px 10px; border-radius: 10px; border: 1.5px solid #B9D4E8;
     font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums;
-    text-align: right; background: #F7FBFE; width: 100%;
+    text-align: right; background: #fff; width: 100%;
   }
   .btn-primario {
     background: #2E86C1; color: #fff; border: none; border-radius: 10px;
@@ -601,14 +606,21 @@ function render() {
 
     linea.append(inN, inV, bX);
 
-    const inNota = document.createElement("input");
-    inNota.type = "text"; inNota.className = "input-nota";
+    const inNota = document.createElement("textarea");
+    inNota.className = "input-nota"; inNota.rows = 1;
     inNota.value = c.nota || "";
     inNota.placeholder = "📝 Nota o aclaración (opcional)";
+    // Crece hacia abajo automáticamente según el texto
+    function ajustarAltura() {
+      inNota.style.height = "auto";
+      inNota.style.height = inNota.scrollHeight + "px";
+    }
+    inNota.addEventListener("input", ajustarAltura);
     inNota.addEventListener("change", () => { c.nota = inNota.value; guardar(); });
 
     fila.append(linea, inNota);
     lista.appendChild(fila);
+    ajustarAltura(); // ajustar ya montada en pantalla (por si la nota guardada es larga)
   });
 
   renderResumen();
