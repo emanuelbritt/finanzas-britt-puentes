@@ -440,7 +440,7 @@ function cargarLocal() {
     if (raw) {
       const s = JSON.parse(raw);
       if (Array.isArray(s.pestanas) && s.pestanas.length) estado = s;
-      if (!estado.pestanas.find(p => p.id === estado.activaId)) estado.activaId = estado.pestanas[0].id;
+      if (!estado.pestanas.find(p => p.id === estado.activaId)) estado.activaId = estado.pestanas[estado.pestanas.length - 1].id;
       if (!Array.isArray(estado.historial)) estado.historial = [];
     }
   } catch(e) {}
@@ -520,7 +520,7 @@ function render() {
     const label = document.createElement("button");
     label.className = "pestana-label";
     label.textContent = t.nombre;
-    label.addEventListener("click", () => { estado.activaId = t.id; render(); });
+    label.addEventListener("click", () => { estado.activaId = t.id; render(); guardar(); });
 
     const cerrar = document.createElement("button");
     cerrar.className = "cerrar-tab";
@@ -635,7 +635,7 @@ async function eliminarPestana(id) {
   const ok = await confirmarAccion("¿Eliminar la pestaña \"" + p.nombre + "\" con todos sus datos? (También se borra en el otro celular)");
   if (ok) {
     estado.pestanas = estado.pestanas.filter(x => x.id !== id);
-    if (estado.activaId === id) estado.activaId = estado.pestanas[0].id;
+    if (estado.activaId === id) estado.activaId = estado.pestanas[estado.pestanas.length - 1].id;
     guardar(); render();
   }
 }
@@ -900,9 +900,18 @@ const firebaseConfig = {
 
   function aplicarRemoto(remoto) {
     if (!Array.isArray(remoto.pestanas) || !remoto.pestanas.length) return;
-    const idActiva = estado.activaId;
+    const idLocal = estado.activaId;
+    const teniaDatosLocales = estado.pestanas.length > 1 || (estado.updatedAt || 0) > 0;
     estado = remoto;
-    estado.activaId = estado.pestanas.find(p => p.id === idActiva) ? idActiva : estado.pestanas[0].id;
+    // Si el activaId que venía de la nube no existe, caer en la pestaña MÁS RECIENTE
+    if (!estado.pestanas.find(p => p.id === estado.activaId)) {
+      estado.activaId = estado.pestanas[estado.pestanas.length - 1].id;
+    }
+    // Solo conservar la pestaña local si este dispositivo ya venía trabajando con datos;
+    // si arranca "en limpio", se respeta la última pestaña usada guardada en la nube.
+    if (teniaDatosLocales && estado.pestanas.find(p => p.id === idLocal)) {
+      estado.activaId = idLocal;
+    }
     if (!Array.isArray(estado.historial)) estado.historial = [];
     guardarLocal();
     render();
